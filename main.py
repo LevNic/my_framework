@@ -4,6 +4,7 @@ from views import views
 urlpatterns = {
     '/': views.main_view,
     '/about/': views.about_view,
+    '/contacts/': views.contact_view,
 }
 
 
