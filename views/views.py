@@ -1,16 +1,25 @@
 import quopri
 
 from views.template_engine import render
+from models import categories_list, courses_list
 
 
 def main_view(request):
     """
     Использование шаблонизатора
-    :param request:
+    :param request: запрос
     :return: HTML страничка
     """
-    secret = request.get('secret_key', None)
-    return '200 OK', render('index.html', secret=secret)
+    return '200 OK', render('course_list.html', objects_list=courses_list)
+
+
+def category_list(request):
+    """
+    Рендеринг странички категории
+    :param request: запрос
+    :return: страничка
+    """
+    return '200 OK', render('category_list.html', objects_list=categories_list)
 
 
 def about_view(request):
@@ -23,6 +32,11 @@ def about_view(request):
 
 
 def decode_value(val):
+    """
+    Декодирует кодовые точки в текст
+    :param val: кодовые точки
+    :return: текст
+    """
     val_b = bytes(val.replace('%', '=').replace("+", " "), 'UTF-8')
     val_decode_str = quopri.decodestring(val_b)
     return val_decode_str.decode('UTF-8')
