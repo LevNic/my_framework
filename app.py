@@ -8,6 +8,18 @@ class Application:
         self.urlpatterns = urlpatterns
         self.front_controllers = front_controllers
 
+    def add_route(self, url):
+        """
+        паттерн декоратор
+        добавляет url и его представление в словарь
+        :param url:
+        :return: функция добавляющая словарь
+        """
+        def inner(view):
+            self.urlpatterns[url] = view
+
+        return inner
+
     def parse_input_data(self, data: str):
         """
         Разберем данные из url строки
@@ -86,3 +98,26 @@ class Application:
             # Если url нет в urlpatterns - то страница не найдена
             start_response('404 NOT FOUND', [('Content-Type', 'text/html')])
             return [b"Not Found"]
+
+
+class DebugApplication(Application):
+
+    def __init__(self, urlpatterns, front_controllers):
+        self.application = Application(urlpatterns, front_controllers)
+        super().__init__(urlpatterns, front_controllers)
+
+    def __call__(self, env, start_response):
+        print('DEBUG MODE')
+        print(env)
+        return self.application(env, start_response)
+
+
+class MockApplication(Application):
+
+    def __init__(self, urlpatterns, front_controllers):
+        self.application = Application(urlpatterns, front_controllers)
+        super().__init__(urlpatterns, front_controllers)
+
+    def __call__(self, env, start_response):
+        start_response('200 OK', [('Content-Type', 'text/html')])
+        return [b'Hello from Mock']
