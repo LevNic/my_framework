@@ -1,4 +1,4 @@
-from app import Application
+from app import Application, DebugApplication, FakeApplication
 from views import views
 
 urlpatterns = {
@@ -20,6 +20,9 @@ front_controllers = [
 ]
 
 application = Application(urlpatterns, front_controllers)
+
+# application = DebugApplication(urlpatterns, front_controllers)
+# application = FakeApplication(urlpatterns, front_controllers)
 
 if __name__ == '__main__':
     pass

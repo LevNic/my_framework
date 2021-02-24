@@ -112,7 +112,7 @@ class DebugApplication(Application):
         return self.application(env, start_response)
 
 
-class MockApplication(Application):
+class FakeApplication(Application):
 
     def __init__(self, urlpatterns, front_controllers):
         self.application = Application(urlpatterns, front_controllers)
@@ -120,4 +120,4 @@ class MockApplication(Application):
 
     def __call__(self, env, start_response):
         start_response('200 OK', [('Content-Type', 'text/html')])
-        return [b'Hello from Mock']
+        return [b'Hello from Fake']
