@@ -4,6 +4,8 @@ from sqlalchemy import Column, Integer, String, create_engine, MetaData, Foreign
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
+from generative_patterns.observer import Subject, Observer
+import jsonpickle
 from generative_patterns.prototipes import PrototypeMixin
 
 Base = declarative_base()
@@ -52,24 +54,28 @@ class DataBase:
 #     category = Column(String, ForeignKey('Category.id'))
 
 
+
+
+
+# абстрактный пользователь
 class User:
-    pass
+    def __init__(self, name):
+        self.name = name
 
 
+# преподаватель
 class Teacher(User):
     pass
 
 
 class Student(User):
-    pass
+
+    def __init__(self, name):
+        self.courses = []
+        super().__init__(name)
 
 
-class SimpleFactory:
-    # Фабричный метод
-    def __init__(self, types=None):
-        self.types = types or {}
-
-
+# Фабрика пользователей
 class UserFactory:
     types = {
         'student': Student,
@@ -77,10 +83,11 @@ class UserFactory:
     }
 
     @classmethod
-    def create(cls, type_):
-        return cls.types[type_]()
+    def create(cls, type_, name):
+        return cls.types[type_](name)
 
 
+# Категория
 class Category:
     # реестр?
     auto_id = 0
@@ -99,22 +106,60 @@ class Category:
         return result
 
 
-class Course(PrototypeMixin):
+# Курс
+class Course(PrototypeMixin, Subject):
 
     def __init__(self, name, category):
         self.name = name
         self.category = category
         self.category.courses.append(self)
+        self.students = []
+        super().__init__()
+
+    def __getitem__(self, item):
+        return self.students[item]
+
+    def add_student(self, student: Student):
+        self.students.append(student)
+        student.courses.append(self)
+        self.notify()
 
 
+class SmsNotifier(Observer):
+
+    def update(self, subject: Course):
+        print('SMS->', 'к нам присоединился', subject.students[-1].name)
+
+
+class EmailNotifier(Observer):
+
+    def update(self, subject: Course):
+        print(('EMAIL->', 'к нам присоединился', subject.students[-1].name))
+
+
+class BaseSerializer:
+
+    def __init__(self, obj):
+        self.obj = obj
+
+    def save(self):
+        return jsonpickle.dumps(self.obj)
+
+    def load(self, data):
+        return jsonpickle.loads(data)
+
+
+# Интерактивный курс
 class InteractiveCourse(Course):
     pass
 
 
+# Курс в записи
 class RecordCourse(Course):
     pass
 
 
+# Фабрика курсов
 class CourseFactory:
     types = {
         'interactive': InteractiveCourse,
@@ -126,6 +171,7 @@ class CourseFactory:
         return cls.types[type_](name, category)
 
 
+# Основной класс - интерфейс проекта
 class TrainingSite:
     # Интерфейс
     def __init__(self):
@@ -134,10 +180,12 @@ class TrainingSite:
         self.courses = []
         self.categories = []
 
-    def create_user(self, type_):
-        return UserFactory.create(type_)
+    @staticmethod
+    def create_user(type_, name):
+        return UserFactory.create(type_, name)
 
-    def create_category(self, name, category=None):
+    @staticmethod
+    def create_category(name, category=None):
         return Category(name, category)
 
     def find_category_by_id(self, id):
@@ -147,18 +195,16 @@ class TrainingSite:
                 return item
         raise Exception(f'Нет категории с id = {id}')
 
-    #
-    # def get_or_create_category(self, name):
-    #     for item in self.categories:
-    #         if item.name == name:
-    #             return item
-    #     return self.create_category(name)
-
-    def create_course(self, type_, name, category):
+    @staticmethod
+    def create_course(type_, name, category):
         return CourseFactory.create(type_, name, category)
 
     def get_course(self, name) -> Course:
         for item in self.courses:
             if item.name == name:
                 return item
-        return None
+
+    def get_student(self, name) -> Student:
+        for item in self.students:
+            if item.name == name:
+                return item

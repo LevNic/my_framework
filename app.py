@@ -1,3 +1,6 @@
+import quopri
+
+
 class Application:
 
     def __init__(self, urlpatterns: dict, front_controllers: list):
@@ -15,6 +18,7 @@ class Application:
         :param url:
         :return: функция добавляющая словарь
         """
+
         def inner(view):
             self.urlpatterns[url] = view
 
